@@ -260,7 +260,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Matrix cameraMatrix(1,1);
 		if (projection)
 		{
-			double angle = gradToRad(45);
+			double angle = gradToRad(30);
 
 			cameraMatrix = {
 				   {cos(angle),0,sin(angle),0},
