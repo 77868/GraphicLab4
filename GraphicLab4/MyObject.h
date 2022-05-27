@@ -15,6 +15,8 @@ private:
 	Matrix cords;
 	unsigned int** polygons;
 	unsigned int polygCount,pointCount;
+	bool isVisible(int polygIndex, Matrix& renderCords);
+	void fill(int polygIndex, Matrix& renderCords, HDC hdc);
 	
 public:
 	MyObject(unsigned int pointCnt,const char* fileName);
@@ -24,7 +26,7 @@ public:
 	double getMiddleX();
 	double getMiddleY();
 	double getMiddleZ();
-	void draw(HDC hdc, COLORREF color, Matrix& transformM);
+	void draw(HDC hdc);
 
 };
 

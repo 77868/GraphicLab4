@@ -147,7 +147,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GraphicLab4.cpp" />
+    <ClCompile Include="GraphicLab5.cpp" />
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="MyObject.cpp" />
   </ItemGroup>

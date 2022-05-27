@@ -22,7 +22,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 MyObject pyramid(5, "pyramid.txt");
-unsigned int axis = 0, projection = 0;
+unsigned int axis = 0, projection = 1;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -212,9 +212,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 0x43://c
 			axis = (axis + 1) % 3;//0-X,1-Y,2-Z
 			break;
-		case 0x4b://k
-			projection = (projection + 1) % 2;
-			break;
 		case 0x1B://ESC
 			PostQuitMessage(0);
 			break;
@@ -257,38 +254,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		TextOutA(bufferDC, 10, 25, X.c_str(), 7);
 		TextOutA(bufferDC, 10, 40, Y.c_str(), 7);
 		TextOutA(bufferDC, 10, 55, Z.c_str(), 7);
-		Matrix cameraMatrix(1,1);
-		if (projection)
-		{
-			double angle = gradToRad(45);
+		
 
-			cameraMatrix = {
-				   {cos(angle),0,sin(angle),0},
-				   {0,1,0,0},
-				   {-sin(angle),0,cos(angle),0},
-				   {0,0,0,1}
-
-			};
-			angle = asin(tan(gradToRad(30)));
-			Matrix rotM{
-					{1,0,0,0},
-					{0,cos(angle),sin(angle),0},
-					{0,-sin(angle),cos(angle),0},
-					{0,0,0,1}
-			};
-			cameraMatrix = cameraMatrix * rotM;
-		}
-		else
-		{
-			cameraMatrix = {
-				 {1,0,0,0},
-				 {0,1,0,0},
-				 {0,0,0,0},
-				 {0,0,0,1},
-			};
-		}
-
-		pyramid.draw(bufferDC, RGB(0, 0, 255), cameraMatrix);// отрисовка объекта в bufferDC и заполнение синим цветом
+		pyramid.draw(bufferDC);// отрисовка объекта в bufferDC и заполнение синим цветом
 
 		//Загрузка буфера в битмап графического устройства и освобождение памяти выделенной на буфер
 		BitBlt(hdc, 0, 0, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top, bufferDC, 0, 0, SRCCOPY);

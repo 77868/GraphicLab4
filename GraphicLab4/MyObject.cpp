@@ -3,6 +3,80 @@
 #include <cmath>
 #include <fstream>
 
+bool MyObject::isVisible(int polygIndex, Matrix& renderCords)
+{
+	double V1X = cords[polygons[polygIndex][0]][0] - cords[polygons[polygIndex][1]][0];//координаты вектора 1 преднадлежещего исследуемой плоскости
+	double V1Y = cords[polygons[polygIndex][0]][1] - cords[polygons[polygIndex][1]][1];
+	double V1Z = cords[polygons[polygIndex][0]][2] - cords[polygons[polygIndex][1]][2];
+
+	double V2X = cords[polygons[polygIndex][1]][0] - cords[polygons[polygIndex][2]][0];//координаты вектора 2 преднадлежещего исследуемой плоскости
+	double V2Y = cords[polygons[polygIndex][1]][1] - cords[polygons[polygIndex][2]][1];
+	double V2Z = cords[polygons[polygIndex][1]][2] - cords[polygons[polygIndex][2]][2];
+
+	double A = V1Y * V2Z - V2Y * V1Z;//нахождение коофицентов уравнения плоскости
+	double B = V1Z * V2X - V2Z * V1X;
+	double C = V1X * V2Y - V2X * V1Y;
+	double D = -(A* cords[polygons[polygIndex][0]][0] +B* cords[polygons[polygIndex][0]][1] +C* cords[polygons[polygIndex][0]][2]);
+
+	double sign = ((A*getMiddleX() + B*getMiddleY() + C*getMiddleZ()+D)<0) ? 1 : -1;//нахождение направления нормали относительно цетра фигуры
+
+	A *= sign;
+	B *= sign;
+	C *= sign;
+	D *= sign;
+
+	if ( (A*0 + B*0 + C*300 + D) < 0)
+		return 0;
+	return 1;
+}
+
+void MyObject::fill(int polygIndex,Matrix& renderCords,HDC hdc)
+{
+	if (renderCords[polygons[polygIndex][0]][1] > renderCords[polygons[polygIndex][1]][1]) std::swap(polygons[polygIndex][0], polygons[polygIndex][1]);
+	if (renderCords[polygons[polygIndex][1]][1] > renderCords[polygons[polygIndex][2]][1]) std::swap(polygons[polygIndex][1], polygons[polygIndex][2]);
+	if (renderCords[polygons[polygIndex][0]][1] > renderCords[polygons[polygIndex][1]][1]) std::swap(polygons[polygIndex][0], polygons[polygIndex][1]);
+
+	HPEN newPen = CreatePen(PS_SOLID, NULL, RGB(0, 255, 0));// создание и выбор кисти необходимого цвета
+	HGDIOBJ prevPen = SelectObject(hdc, newPen);
+
+	double x1, x2;
+	for (int y = renderCords[polygons[polygIndex][0]][1]; y < renderCords[polygons[polygIndex][1]][1]; y++) {
+		if ((renderCords[polygons[polygIndex][1]][1] - renderCords[polygons[polygIndex][0]][1]) < 1 || (renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][0]][1]) < 1) {
+			continue;
+		}
+		x1 = (((y - renderCords[polygons[polygIndex][0]][1]) * (renderCords[polygons[polygIndex][1]][0] - renderCords[polygons[polygIndex][0]][0])) / (renderCords[polygons[polygIndex][1]][1] - renderCords[polygons[polygIndex][0]][1])) + renderCords[polygons[polygIndex][0]][0];
+		x2 = (((y - renderCords[polygons[polygIndex][0]][1]) * (renderCords[polygons[polygIndex][2]][0] - renderCords[polygons[polygIndex][0]][0])) / (renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][0]][1])) + renderCords[polygons[polygIndex][0]][0];
+		MoveToEx(hdc, static_cast<int>(round(x1)), y, NULL);
+		LineTo(hdc, static_cast<int>(round(x2)), y);
+	}
+	for (int y = renderCords[polygons[polygIndex][1]][1]; y < renderCords[polygons[polygIndex][2]][1]; y++) {
+		if ((renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][1]][1]) == 0 || (renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][0]][1]) == 0) {
+			continue;
+		}
+		x1 = (((y - renderCords[polygons[polygIndex][1]][1]) * (renderCords[polygons[polygIndex][2]][0] - renderCords[polygons[polygIndex][1]][0])) / (renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][1]][1])) + renderCords[polygons[polygIndex][1]][0];
+		x2 = (((y - renderCords[polygons[polygIndex][0]][1]) * (renderCords[polygons[polygIndex][2]][0] - renderCords[polygons[polygIndex][0]][0])) / (renderCords[polygons[polygIndex][2]][1] - renderCords[polygons[polygIndex][0]][1])) + renderCords[polygons[polygIndex][0]][0];
+		MoveToEx(hdc, static_cast<int>(round(x1)), y, NULL);
+		LineTo(hdc, static_cast<int>(round(x2)), y);
+	}
+
+	SelectObject(hdc, prevPen);// возращение старой кисти и освобождение новой
+	DeleteObject(newPen);
+
+	newPen = CreatePen(PS_SOLID, NULL, RGB(0, 0, 0));// создание и выбор кисти необходимого цвета
+	prevPen = SelectObject(hdc, newPen);
+	// отрисовка рёбер треугольника
+	MoveToEx(hdc, static_cast<int>(renderCords[polygons[polygIndex][0]][0]), static_cast<int>(renderCords[polygons[polygIndex][0]][1]), nullptr);
+	LineTo(hdc, static_cast<int>(renderCords[polygons[polygIndex][1]][0]), static_cast<int>(renderCords[polygons[polygIndex][1]][1]));
+
+	MoveToEx(hdc, static_cast<int>(renderCords[polygons[polygIndex][1]][0]), static_cast<int>(renderCords[polygons[polygIndex][1]][1]), nullptr);
+	LineTo(hdc, static_cast<int>(renderCords[polygons[polygIndex][2]][0]), static_cast<int>(renderCords[polygons[polygIndex][2]][1]));
+
+	MoveToEx(hdc, static_cast<int>(renderCords[polygons[polygIndex][0]][0]), static_cast<int>(renderCords[polygons[polygIndex][0]][1]), nullptr);
+	LineTo(hdc, static_cast<int>(renderCords[polygons[polygIndex][2]][0]), static_cast<int>(renderCords[polygons[polygIndex][2]][1]));
+	SelectObject(hdc, prevPen);// возращение старой кисти и освобождение новой
+	DeleteObject(newPen);
+}
+
 MyObject::MyObject(unsigned int pointCnt, const char* fileName) : cords(pointCnt, 4)
 {
 	std::ifstream in(fileName);
@@ -143,55 +217,24 @@ void MyObject::rotate(double angle, unsigned int axis)
 	cords = cords * transformM;
 }
 
-void MyObject::draw(HDC hdc, COLORREF color, Matrix& transformM)
+void MyObject::draw(HDC hdc)
 {
-	HPEN newPen = CreatePen(PS_SOLID, NULL, color);// создание и выбор кисти необходимого цвета
-	HGDIOBJ prevPen = SelectObject(hdc, newPen);
-
 	Matrix renderCords(cords);
-	/*double angle = gradToRad(45);
-	
-	Matrix transformM{
-			{cos(angle),0,sin(angle),0},
-			{0,1,0,0},
-			{-sin(angle),0,cos(angle),0},
-			{0,0,0,1}
-		
-	};
-	angle = asin(tan(gradToRad(30)));
-	Matrix rotM{
-			{1,0,0,0},
-			{0,cos(angle),sin(angle),0},
-			{0,-sin(angle),cos(angle),0},
-			{0,0,0,1}
-	};
-	transformM = transformM * rotM;*/
 
 
-	/*Matrix transformM{
-	{1,0,0,0},
-	{0,1,0,0},
-	{0,0,0,0},
-	{0,0,0,1},
-	};*/
-	renderCords = renderCords * transformM;
+	for (size_t i = 0; i < pointCount; i++)
+	{
+		renderCords[i][0] = 300 * renderCords[i][0] / renderCords[i][2] +450;
+		renderCords[i][1] = 300 * renderCords[i][1] / renderCords[i][2] +300;
+	}
 	
 	for (size_t i = 0; i < polygCount; i++)
 	{
-		// отрисовка рёбер треугольника
-		MoveToEx(hdc, static_cast<int>(renderCords[polygons[i][0]][0]), static_cast<int>(renderCords[polygons[i][0]][1]), nullptr);
-		LineTo(hdc, static_cast<int>(renderCords[polygons[i][1]][0]), static_cast<int>(renderCords[polygons[i][1]][1]));
-
-		MoveToEx(hdc, static_cast<int>(renderCords[polygons[i][1]][0]), static_cast<int>(renderCords[polygons[i][1]][1]), nullptr);
-		LineTo(hdc, static_cast<int>(renderCords[polygons[i][2]][0]), static_cast<int>(renderCords[polygons[i][2]][1]));
-
-		MoveToEx(hdc, static_cast<int>(renderCords[polygons[i][0]][0]), static_cast<int>(renderCords[polygons[i][0]][1]), nullptr);
-		LineTo(hdc, static_cast<int>(renderCords[polygons[i][2]][0]), static_cast<int>(renderCords[polygons[i][2]][1]));
-
+		if (isVisible(i, renderCords))
+		{
+			fill(i,renderCords,hdc);
+		}
 	}
-
-	SelectObject(hdc, prevPen);// возращение старой кисти и освобождение новой
-	DeleteObject(newPen);
 }
 
 
